@@ -1,0 +1,161 @@
+# Self-Healing Policies Configuration
+
+# Fault Types and Corresponding Healing Actions
+policies:
+  
+  # Sensor Anomaly Detection
+  sensor_anomaly:
+    description: "Abnormal sensor reading detected by ML model"
+    severity: "medium"
+    actions:
+      - action: "validate_reading"
+        priority: 1
+        timeout: 5
+      - action: "switch_to_backup_sensor"
+        priority: 2
+        timeout: 10
+        conditions:
+          - backup_sensor_available: true
+      - action: "reset_sensor"
+        priority: 3
+        timeout: 15
+    max_attempts: 3
+    cooldown: 60
+  
+  # Device Offline
+  device_offline:
+    description: "Device heartbeat timeout"
+    severity: "high"
+    actions:
+      - action: "ping_device"
+        priority: 1
+        timeout: 10
+      - action: "restart_device"
+        priority: 2
+        timeout: 30
+      - action: "isolate_device"
+        priority: 3
+        timeout: 5
+        conditions:
+          - repeated_failures: 3
+    max_attempts: 3
+    cooldown: 120
+  
+  # Sensor Drift
+  sensor_drift:
+    description: "Gradual sensor value drift detected"
+    severity: "low"
+    actions:
+      - action: "calibrate_sensor"
+        priority: 1
+        timeout: 20
+      - action: "switch_to_backup_sensor"
+        priority: 2
+        timeout: 10
+        conditions:
+          - backup_sensor_available: true
+    max_attempts: 2
+    cooldown: 300
+  
+  # High Error Rate
+  high_error_rate:
+    description: "Multiple errors in short time window"
+    severity: "high"
+    actions:
+      - action: "restart_device"
+        priority: 1
+        timeout: 30
+      - action: "isolate_device"
+        priority: 2
+        timeout: 5
+    max_attempts: 2
+    cooldown: 180
+  
+  # Communication Failure
+  communication_failure:
+    description: "MQTT connection issues"
+    severity: "medium"
+    actions:
+      - action: "reconnect_mqtt"
+        priority: 1
+        timeout: 15
+      - action: "restart_network"
+        priority: 2
+        timeout: 20
+      - action: "restart_device"
+        priority: 3
+        timeout: 30
+    max_attempts: 3
+    cooldown: 90
+
+# Action Definitions
+actions:
+  
+  validate_reading:
+    description: "Request multiple readings to validate anomaly"
+    command: "validate"
+    parameters:
+      sample_count: 5
+      interval: 2
+  
+  switch_to_backup_sensor:
+    description: "Switch to redundant backup sensor"
+    command: "switch_sensor"
+    parameters:
+      sensor_type: "backup"
+  
+  reset_sensor:
+    description: "Reset sensor to default state"
+    command: "reset"
+    parameters:
+      component: "sensor"
+  
+  ping_device:
+    description: "Send ping command to verify connectivity"
+    command: "ping"
+    parameters:
+      timeout: 5
+  
+  restart_device:
+    description: "Restart the IoT device"
+    command: "restart"
+    parameters:
+      mode: "soft"
+  
+  isolate_device:
+    description: "Isolate device from network (quarantine)"
+    command: "isolate"
+    parameters:
+      duration: 300
+  
+  calibrate_sensor:
+    description: "Recalibrate sensor readings"
+    command: "calibrate"
+    parameters:
+      reference: "baseline"
+  
+  reconnect_mqtt:
+    description: "Reconnect to MQTT broker"
+    command: "reconnect"
+    parameters:
+      clean_session: true
+  
+  restart_network:
+    description: "Restart network interface"
+    command: "restart"
+    parameters:
+      component: "network"
+
+# Healing Thresholds
+thresholds:
+  anomaly_score: 0.7
+  heartbeat_timeout: 30
+  error_rate_window: 300
+  error_rate_threshold: 5
+  drift_percentage: 15
+  
+# Recovery Validation
+validation:
+  post_healing_delay: 10
+  validation_samples: 5
+  success_threshold: 0.8

@@ -1,0 +1,57 @@
+# MQTT Topic Structure for Self-Healing IoT System
+
+topics:
+  # Device Telemetry Topics
+  telemetry:
+    base: "iot/telemetry"
+    temperature: "iot/telemetry/{device_id}/temperature"
+    humidity: "iot/telemetry/{device_id}/humidity"
+    light: "iot/telemetry/{device_id}/light"
+    gas: "iot/telemetry/{device_id}/gas"
+    all: "iot/telemetry/{device_id}/all"
+  
+  # Device Health Topics
+  health:
+    base: "iot/health"
+    heartbeat: "iot/health/{device_id}/heartbeat"
+    status: "iot/health/{device_id}/status"
+    battery: "iot/health/{device_id}/battery"
+  
+  # Alert Topics
+  alerts:
+    base: "iot/alerts"
+    anomaly: "iot/alerts/{device_id}/anomaly"
+    fault: "iot/alerts/{device_id}/fault"
+    offline: "iot/alerts/{device_id}/offline"
+  
+  # Command Topics (Backend -> Device)
+  commands:
+    base: "iot/commands"
+    reset: "iot/commands/{device_id}/reset"
+    switch_sensor: "iot/commands/{device_id}/switch_sensor"
+    restart: "iot/commands/{device_id}/restart"
+    isolate: "iot/commands/{device_id}/isolate"
+    configure: "iot/commands/{device_id}/configure"
+  
+  # System Topics
+  system:
+    base: "iot/system"
+    discovery: "iot/system/discovery"
+    registration: "iot/system/registration"
+    logs: "iot/system/logs"
+
+# QoS Levels
+qos:
+  telemetry: 1      # At least once delivery
+  health: 1         # At least once delivery
+  alerts: 2         # Exactly once delivery (critical)
+  commands: 2       # Exactly once delivery (critical)
+  system: 1         # At least once delivery
+
+# Message Retention
+retain:
+  telemetry: false
+  health: true      # Retain last heartbeat
+  alerts: false
+  commands: false
+  system: true      # Retain discovery/registration
