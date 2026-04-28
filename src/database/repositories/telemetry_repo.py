@@ -22,7 +22,8 @@ class TelemetryRepository:
         sensor_type: str,
         sensor_value: float,
         unit: Optional[str] = None,
-        is_anomaly: bool = False
+        is_anomaly: bool = False,
+        original_value: Optional[float] = None
     ) -> int:
         """
         Insert telemetry data
@@ -40,8 +41,8 @@ class TelemetryRepository:
         query = """
             INSERT INTO telemetry (
                 device_id, sensor_type, sensor_value, unit, 
-                timestamp, is_anomaly
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                timestamp, is_anomaly, original_value
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         """
         
         parameters = (
@@ -50,7 +51,8 @@ class TelemetryRepository:
             sensor_value,
             unit,
             datetime.utcnow(),
-            1 if is_anomaly else 0
+            1 if is_anomaly else 0,
+            original_value
         )
         
         row_id = await self.db.execute_insert(query, parameters)

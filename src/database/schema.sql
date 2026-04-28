@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS telemetry (
     unit TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_anomaly BOOLEAN DEFAULT 0,
+    original_value REAL,
     FOREIGN KEY (device_id) REFERENCES devices(device_id)
 );
 

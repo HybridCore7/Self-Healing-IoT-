@@ -105,7 +105,19 @@ async def lifespan(app: FastAPI):
                 
                 sensor_type_enum = SensorType(sensor_type)
                 is_anomaly, anomaly_score = anomaly_detector.predict(device_id, sensor_type_enum, value)
-                await telemetry_repo.insert_telemetry(device_id, sensor_type, value, unit, is_anomaly)
+                
+                original_value = None
+                if is_anomaly:
+                    original_value = value
+                    value = anomaly_detector.correct_anomaly(device_id, sensor_type_enum)
+                    logger.info(f"Anomaly detected! Corrected {original_value} to {value}")
+                
+                # Add the (corrected or normal) sample to the detector's sliding window
+                anomaly_detector.add_sample(device_id, sensor_type_enum, value)
+                
+                await telemetry_repo.insert_telemetry(
+                    device_id, sensor_type, value, unit, is_anomaly, original_value
+                )
                 
                 if is_anomaly:
                     await anomaly_repo.create_anomaly(

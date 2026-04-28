@@ -132,6 +132,22 @@ class AnomalyDetector:
         except Exception as e:
             logger.error(f"Error predicting anomaly: {e}")
             return False, 0.0
+            
+    def correct_anomaly(self) -> float:
+        """
+        Calculate a corrected value for the anomaly using moving average
+        of the data buffer. If buffer is empty, return 0.0.
+        """
+        if not self.data_buffer:
+            return 0.0
+            
+        # Use recent data to compute a safe average (excluding the latest bad value if it's already there)
+        # We assume the most recent few values are normal if they weren't flagged
+        valid_data = list(self.data_buffer)
+        if len(valid_data) > 1:
+            return sum(valid_data[:-1]) / (len(valid_data) - 1)
+        return valid_data[0]
+
     
     def predict_batch(self, values: List[float]) -> List[Tuple[bool, float]]:
         """
@@ -262,6 +278,16 @@ class MultiSensorAnomalyDetector:
         """Predict anomaly for device-sensor"""
         detector = self.get_or_create_detector(device_id, sensor_type)
         return detector.predict(value)
+        
+    def correct_anomaly(
+        self,
+        device_id: str,
+        sensor_type: SensorType
+    ) -> float:
+        """Get corrected value for an anomaly"""
+        detector = self.get_or_create_detector(device_id, sensor_type)
+        return detector.correct_anomaly()
+
     
     def train_all(self):
         """Train all detectors"""
